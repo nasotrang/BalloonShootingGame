@@ -1,0 +1,62 @@
+GraphicsWindow.BackgroundColor = "White"
+GraphicsWindow.Title = "Balloon shooting game"
+GraphicsWindow.Width = 820
+GraphicsWindow.Height = 700
+GraphicsWindow.BrushColor = "Black"
+cannon = Shapes.AddRectangle(80, 40)
+shooter = Shapes.AddRectangle(50, 15)
+GraphicsWindow.PenColor = "OliveDrab"
+GraphicsWindow.BrushColor = "YellowGreen"
+Shapes.Move(cannon, 700, 600)
+Shapes.Move(shooter, 660, 610)
+elipseSize= 50
+balloon = Shapes.AddEllipse(elipseSize, elipseSize)
+Shapes.Move(balloon, 50, GraphicsWindow.Height / 2)
+
+RunLoop:
+  GraphicsWindow.KeyDown = OnKeyDown
+  BalloonMove()
+  Goto Runloop
+
+Sub OnKeyDown
+  If (GraphicsWindow.LastKey = "Down") Then
+      Shapes.Move(cannon,Shapes.GetLeft(cannon), Shapes.GetTop(cannon)+10)
+      Shapes.Move(shooter, Shapes.GetLeft(shooter), Shapes.GetTop(shooter)+10)
+  Endif
+  If (GraphicsWindow.LastKey = "Up") Then
+    Shapes.Move(cannon,Shapes.GetLeft(cannon), Shapes.GetTop(cannon)-10)
+    Shapes.Move(shooter, Shapes.GetLeft(shooter), Shapes.GetTop(shooter)-10)
+  EndIf
+  If (GraphicsWindow.LastKey = "Space") Then
+    Shoot()
+  EndIf
+EndSub
+
+Sub BalloonMove
+
+ balloon_top = Shapes.GetTop(balloon)
+ If ( balloon_top < GraphicsWindow.Height - elipseSize And balloon_top > 0) Then
+    If Math.Remainder(Clock.Millisecond,100) = 0  Then
+       random = Math.GetRandomNumber(2)
+        If (random = 1) Then
+          direction = 0.5
+        Else
+          direction = -0.5
+        EndIf
+    EndIf
+    Shapes.Move(balloon, Shapes.GetLeft(balloon), balloon_top - direction)
+  Else
+    Shapes.Move(balloon, Shapes.GetLeft(balloon),  balloon_top + direction)
+   EndIf
+
+EndSub
+
+Sub Shoot
+  GraphicsWindow.BrushColor = "Gray"
+  GraphicsWindow.PenColor = "Gray"
+  bullet = Shapes.AddRectangle(15, 15)
+  Shapes.move(bullet, Shapes.GetLeft(shooter),Shapes.GetTop(shooter))
+  Shapes.Animate(bullet, 0, Shapes.GetTop(shooter), 1000)
+  Program.Delay(1000)
+EndSub
+
