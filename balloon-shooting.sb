@@ -4,6 +4,7 @@ balloonSize= 50
 balloonSpeed = 0.1
 bulletSpeed = 1.5 * balloonSpeed
 shootDelay = 1000
+changeFrequency = 200
 
 'Initialising graphics window
 GraphicsWindow.BackgroundColor = "White"
@@ -32,7 +33,8 @@ GraphicsWindow.PenColor = "White"
 bullet = Shapes.AddRectangle(15, 15)
 Shapes.move(bullet, Shapes.GetLeft(shooter)-15,Shapes.GetTop(shooter))
 
-'Initialise 
+'Initialise the variables for the number of time a bullet is shot and the number of time
+'the bullet misses the targeted balloon
 timeShot = 0
 timeMissed = 0
 
@@ -66,10 +68,11 @@ Sub BalloonMove
   balloon_top = Shapes.GetTop(balloon)
   'Setting the bound for the balloon to move
   If ( balloon_top < GraphicsWindow.Height - balloonSize And balloon_top > 0) Then
-    'Setting the speed of the balloon
-    If Math.Remainder(Clock.Millisecond,200) = 0  Then
+    'Produce a random number depending on the given frequency
+    If Math.Remainder(Clock.Millisecond,changeFrequency) = 0  Then
       random = Math.GetRandomNumber(2)
-      'Makes the balloon change direction randomly
+      'Change direction of movement of the balloon according to the random variable
+      'with equal chance of up or down
       If (random = 1) Then
         direction = balloonSpeed
       Else
