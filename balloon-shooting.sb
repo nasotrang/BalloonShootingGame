@@ -1,62 +1,124 @@
+'Initialising constants
+balloonHitbox = 1000 
+balloonSize= 50
+balloonSpeed = 0.1
+bulletSpeed = 1.5 * balloonSpeed
+shootDelay = 1000
+
+'Initialising graphics window
 GraphicsWindow.BackgroundColor = "White"
-GraphicsWindow.Title = "Balloon shooting game"
+GraphicsWindow.Title = "Balloon Shooting Game"
 GraphicsWindow.Width = 820
 GraphicsWindow.Height = 700
 GraphicsWindow.BrushColor = "Black"
+
+'Creating cannon and shooter shapes and position the shapes at given coordinates
 cannon = Shapes.AddRectangle(80, 40)
 shooter = Shapes.AddRectangle(50, 15)
+
 GraphicsWindow.PenColor = "OliveDrab"
 GraphicsWindow.BrushColor = "YellowGreen"
+
 Shapes.Move(cannon, 700, 600)
 Shapes.Move(shooter, 660, 610)
-elipseSize= 50
-balloon = Shapes.AddEllipse(elipseSize, elipseSize)
+
+'Creating the balloon and bullet shapes and position them at given coordinates
+balloon = Shapes.AddEllipse(balloonSize, balloonSize)
 Shapes.Move(balloon, 50, GraphicsWindow.Height / 2)
 
+GraphicsWindow.BrushColor = "White"
+GraphicsWindow.PenColor = "White"
+
+bullet = Shapes.AddRectangle(15, 15)
+Shapes.move(bullet, Shapes.GetLeft(shooter)-15,Shapes.GetTop(shooter))
+
+'Initialise 
+timeShot = 0
+timeMissed = 0
+
+'Main loop
 RunLoop:
   GraphicsWindow.KeyDown = OnKeyDown
+  IsFired = "False"
   BalloonMove()
+  CheckIfShot()
   Goto Runloop
 
 Sub OnKeyDown
+  'This subroutine gets the user's key inputs and sends to graphics windows to handle accordingly
   If (GraphicsWindow.LastKey = "Down") Then
-      Shapes.Move(cannon,Shapes.GetLeft(cannon), Shapes.GetTop(cannon)+10)
-      Shapes.Move(shooter, Shapes.GetLeft(shooter), Shapes.GetTop(shooter)+10)
+      Shapes.Move(cannon,Shapes.GetLeft(cannon), Shapes.GetTop(cannon)+20)
+      Shapes.Move(shooter, Shapes.GetLeft(shooter), Shapes.GetTop(shooter)+20)
   Endif
   If (GraphicsWindow.LastKey = "Up") Then
-    Shapes.Move(cannon,Shapes.GetLeft(cannon), Shapes.GetTop(cannon)-10)
-    Shapes.Move(shooter, Shapes.GetLeft(shooter), Shapes.GetTop(shooter)-10)
+    Shapes.Move(cannon,Shapes.GetLeft(cannon), Shapes.GetTop(cannon)-20)
+    Shapes.Move(shooter, Shapes.GetLeft(shooter), Shapes.GetTop(shooter)-20)
   EndIf
   If (GraphicsWindow.LastKey = "Space") Then
     Shoot()
+    'Increment the number of  times a bullet is shot when the spacebar is pressed
+    timeShot = timeShot + 1
   EndIf
 EndSub
 
 Sub BalloonMove
-
- balloon_top = Shapes.GetTop(balloon)
- If ( balloon_top < GraphicsWindow.Height - elipseSize And balloon_top > 0) Then
-    If Math.Remainder(Clock.Millisecond,100) = 0  Then
-       random = Math.GetRandomNumber(2)
-        If (random = 1) Then
-          direction = 0.5
-        Else
-          direction = -0.5
-        EndIf
+  'This subroutine controls the random movement of the balloon
+  balloon_top = Shapes.GetTop(balloon)
+  'Setting the bound for the balloon to move
+  If ( balloon_top < GraphicsWindow.Height - balloonSize And balloon_top > 0) Then
+    'Setting the speed of the balloon
+    If Math.Remainder(Clock.Millisecond,200) = 0  Then
+      random = Math.GetRandomNumber(2)
+      'Makes the balloon change direction randomly
+      If (random = 1) Then
+        direction = balloonSpeed
+      Else
+        direction = -balloonSpeed
+      EndIf
     EndIf
     Shapes.Move(balloon, Shapes.GetLeft(balloon), balloon_top - direction)
   Else
     Shapes.Move(balloon, Shapes.GetLeft(balloon),  balloon_top + direction)
-   EndIf
-
+  EndIf
 EndSub
 
 Sub Shoot
-  GraphicsWindow.BrushColor = "Gray"
-  GraphicsWindow.PenColor = "Gray"
-  bullet = Shapes.AddRectangle(15, 15)
-  Shapes.move(bullet, Shapes.GetLeft(shooter),Shapes.GetTop(shooter))
-  Shapes.Animate(bullet, 0, Shapes.GetTop(shooter), 1000)
-  Program.Delay(1000)
+  'This subroutine controls the bullets fired from the cannon
+  If Clock.ElapsedMilliseconds - ShotTime < shootDelay Then
+    IsFired = "False"
+  Else
+    IsFired = "True"
+    ShotTime = Clock.ElapsedMilliseconds
+    'Create the bullet
+    GraphicsWindow.BrushColor = "Gray"
+    GraphicsWindow.PenColor = "Gray"
+    bullet = Shapes.AddRectangle(15, 15)
+    Shapes.Move(bullet, Shapes.GetLeft(shooter),Shapes.GetTop(shooter))
+    
+    While (Shapes.GetLeft(bullet) > 0)
+      'Move the bullets towards the balloon
+      'Note: should not use Animate here since Animate will instantly change the x coordinate 
+      'before the bullet actually reaches the balloon
+      Shapes.Move(bullet, Shapes.GetLeft(bullet) - bulletSpeed, Shapes.GetTop(bullet))
+    EndWhile
+    'Remove the bullet when the bullet reaches coordinate x = o
+    Shapes.Remove(bullet)
+    
+  EndIf
 EndSub
 
+Sub CheckIfShot
+  'This subroutine checks if the bullet touches the balloon and either calculates the number of times the 
+  'bullet missed the balloon or ends the game when it does not
+  bulletx = Shapes.GetLeft(bullet)
+  bullety = Shapes.GetTop(bullet)
+  targetx = Shapes.GetLeft(balloon) + balloonSize
+  targety = Shapes.GetTop(balloon) + balloonSize/2
+  distanceSquared = Math.Power(bulletx-targetx, 2) + Math.Power(bullety-targety, 2)
+  If distanceSquared < balloonHitbox Then
+    timeMissed = timeShot - 1
+    TextWindow.WriteLine("You win!")
+    TextWindow.WriteLine("Number of times missed: "  + timeMissed)
+    GraphicsWindow.Hide()
+  EndIf
+EndSub
